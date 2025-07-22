@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Jual Pulsa & Paket Data</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 p-4">
+
+  <div id="mainPage" class="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow">
+    <h1 class="text-2xl font-bold text-center mb-4">Daftar Harga Pulsa & Paket</h1>
+
+    <!-- TABEL HARGA -->
+    <table class="w-full table-auto border border-gray-300 mb-6">
+      <thead class="bg-gray-200">
+        <tr>
+          <th class="border p-2">Kategori</th>
+          <th class="border p-2">Paket</th>
+          <th class="border p-2">Harga</th>
+          <th class="border p-2">Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="priceTableBody"></tbody>
+    </table>
+
+    <!-- FORM PEMBELIAN -->
+    <div id="formPembelian" class="pt-6 border-t">
+      <h2 class="text-xl font-semibold mb-2">Form Pembelian</h2>
+      <div class="mb-4">
+        <label class="block font-medium mb-1">Pilih Paket:</label>
+        <select id="selectedPaket" class="w-full p-2 border rounded">
+          <option value="">-- Pilih Paket --</option>
+        </select>
+      </div>
+
+      <div class="mb-4">
+        <label class="block font-medium mb-1">Nomor HP / Token:</label>
+        <input type="text" id="nomor" placeholder="081234567890" class="w-full p-2 border rounded" />
+      </div>
+
+      <div class="mb-4">
+        <label class="block font-medium mb-1">Metode Pembayaran:</label>
+        <select id="metodePembayaran" class="w-full p-2 border rounded">
+          <option value="TF">Transfer Bank</option>
+          <option value="QRIS">QRIS</option>
+        </select>
+      </div>
+
+      <!-- QRIS Image -->
+      <div id="qrisImageContainer" class="mb-4 hidden">
+        <p class="font-medium text-center mb-2">Scan QRIS:</p>
+        <img src="https://i.imgur.com/9K2YsTf.png" alt="QRIS" class="mx-auto w-60 rounded-xl shadow" />
+      </div>
+
+      <!-- Upload Bukti -->
+      <div class="mb-4">
+        <label class="block font-medium mb-1">Upload Bukti Pembayaran (opsional):</label>
+        <input type="file" id="buktiPembayaran" accept="image/*" class="w-full p-2 border rounded bg-white" />
+      </div>
+
+      <button onclick="kirimKeWA()" class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 rounded-xl">
+        Kirim ke WhatsApp
+      </button>
+    </div>
+  </div>
+
+  <!-- HALAMAN STATUS -->
+  <div id="statusPage" class="hidden max-w-xl mx-auto bg-white p-6 rounded-xl shadow text-center">
+    <h2 class="text-2xl font-bold mb-4 text-green-600">Pesanan Dikirim!</h2>
+    <p class="mb-2"><strong>Paket:</strong> <span id="statusPaket"></span></p>
+    <p class="mb-2"><strong>Nomor:</strong> <span id="statusNomor"></span></p>
+    <p class="mb-2"><strong>Pembayaran:</strong> <span id="statusMetode"></span></p>
+    <p class="mt-4">Silakan tunggu proses konfirmasi. Jika belum diproses 5-10 menit, hubungi admin.</p>
+    <button onclick="kembali()" class="mt-6 px-4 py-2 bg-blue-500 text-white rounded-lg">Kembali</button>
+  </div>
+
+  <script>
+    const waAdmin = "6282291700778"; // Ganti dengan nomor admin kamu
+
+    const daftarHarga = [
+      { kategori: "Pulsa Reguler", paket: "Pulsa 5rb", harga: "Rp7.000" },
+      { kategori: "Pulsa Reguler", paket: "Pulsa 10rb", harga: "Rp12.000" },
+      { kategori: "Pulsa Reguler", paket: "Pulsa 20rb", harga: "Rp22.000" },
+      { kategori: "Pulsa Transfer", paket: "Transfer 10rb", harga: "Rp11.000" },
+      { kategori: "Pulsa Transfer", paket: "Transfer 25rb", harga: "Rp26.000" },
+      { kategori: "Paket Data", paket: "1GB", harga: "Rp10.000" },
+      { kategori: "Paket Data", paket: "5GB", harga: "Rp25.000" },
+      { kategori: "Paket Data", paket: "10GB", harga: "Rp40.000" },
+    ];
+
+    const tableBody = document.getElementById("priceTableBody");
+    const selectPaket = document.getElementById("selectedPaket");
+
+    daftarHarga.forEach((item, index) => {
+      const row = `<tr>
+        <td class="border p-2">${item.kategori}</td>
+        <td class="border p-2">${item.paket}</td>
+        <td class="border p-2">${item.harga}</td>
+        <td class="border p-2 text-center">
+          <button onclick="isiForm(${index})" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
+            Beli
+          </button>
+        </td>
+      </tr>`;
+      tableBody.innerHTML += row;
+
+      const option = document.createElement("option");
+      option.value = index;
+      option.text = `${item.kategori} - ${item.paket} (${item.harga})`;
+      selectPaket.add(option);
+    });
+
+    const metodeSelect = document.getElementById("metodePembayaran");
+    metodeSelect.addEventListener("change", function () {
+      document.getElementById("qrisImageContainer").classList.toggle("hidden", metodeSelect.value !== "QRIS");
+    });
+
+    function isiForm(index) {
+      selectPaket.value = index;
+      document.getElementById("formPembelian").scrollIntoView({ behavior: "smooth" });
+    }
+
+    function kirimKeWA() {
+      const index = selectPaket.value;
+      const nomor = document.getElementById("nomor").value.trim();
+      const metode = metodeSelect.value;
+      const fileInput = document.getElementById("buktiPembayaran");
+
+      if (!index || !nomor) {
+        alert("Pilih paket dan isi nomor dengan benar.");
+        return;
+      }
+
+      const { kategori, paket, harga } = daftarHarga[index];
+      let pesan = `Halo, saya ingin membeli:\nKategori: ${kategori}\nPaket: ${paket}\nHarga: ${harga}\nNomor: ${nomor}\nPembayaran: ${metode}`;
+
+      // Jika upload bukti, beri peringatan untuk kirim manual
+      if (fileInput.files.length > 0) {
+        pesan += `\n\n*Saya telah mengupload bukti pembayaran.*\nSilakan cek di sistem atau minta dikirim manual.`;
+      }
+
+      window.open(`https://wa.me/${waAdmin}?text=${encodeURIComponent(pesan)}`, "_blank");
+
+      // Tampilkan status
+      document.getElementById("mainPage").classList.add("hidden");
+      document.getElementById("statusPage").classList.remove("hidden");
+      document.getElementById("statusPaket").innerText = `${paket} (${harga})`;
+      document.getElementById("statusNomor").innerText = nomor;
+      document.getElementById("statusMetode").innerText = metode;
+    }
+
+    function kembali() {
+      document.getElementById("mainPage").classList.remove("hidden");
+      document.getElementById("statusPage").classList.add("hidden");
+      document.getElementById("selectedPaket").value = "";
+      document.getElementById("nomor").value = "";
+      document.getElementById("buktiPembayaran").value = "";
+    }
+  </script>
+
+</body>
+</html>
